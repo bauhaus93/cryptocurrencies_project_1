@@ -1,2 +1,3 @@
 /blockchain/
 *.log
+init_blockchain.sql
