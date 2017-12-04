@@ -3,4 +3,5 @@ check for:
 * transaction input >= transaction output?
 * user has enough btc to spend
 * double spending?
-* check if reward (= first transaction in block) is 50 BTC + transaction fees
+* check if first trans of block is coinbase transaction
+* check if coinbase for block is 50 BTC + transaction fees
