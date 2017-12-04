@@ -29,13 +29,21 @@ create or replace function get_first_block_transactions() returns table(block_id
   order by block_id;
 $$ language sql;
 
-create or replace function get_block_creation_fee() returns table(block_id integer, creation_fee numeric) as $$
-  select block_id, sum(value) as creation_fee
+create or replace function get_block_coinbases() returns table(block_id integer, coinbase numeric) as $$
+  select block_id, sum(value) as coinbase
   from get_first_block_transactions() inner join outputs using(tx_id)
   group by block_id
   order by block_id;
 $$ language sql;
 
 select *
-from get_block_creation_fee()
-where creation_fee < 5000000000;
+from get_block_coinbases()
+where coinbase < 5000000000;
+
+select block_id, throughput
+from get_tx_throughputs()
+where throughput < 0;
+
+select *
+from get_block_coinbases() join get_block_throughputs() using(block_id)
+where 5000000000 + throughput <> coinbase;
