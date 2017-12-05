@@ -107,3 +107,58 @@ having min(tx_id) <> max(tx_id);
 select block_id, output_id, value
 from outputs join transactions using(tx_id)
 where outputs.value > 2100000000000000 or outputs.value < 0;
+
+
+delete from invalid_blocks;
+
+insert into invalid_blocks
+select block_id
+from get_block_coinbases()
+where coinbase < 5000000000;
+
+insert into invalid_blocks
+select block_id
+from get_tx_throughputs()
+where throughput < 0;
+
+insert into invalid_blocks
+select block_id
+from get_block_coinbases() join get_block_throughputs() using(block_id)
+where 5000000000 + throughput <> coinbase;
+
+insert into invalid_blocks
+select block_id
+from get_first_multiple_usages() join inputs using(output_id) join transactions using(tx_id)
+where inputs.tx_id > first_tx_id;
+
+insert into invalid_blocks
+select block_id
+from get_first_multiple_usages() join inputs using(output_id) join transactions using(tx_id)
+group by output_id, tx_id, block_id
+having count(tx_id) > 1;
+
+insert into invalid_blocks
+select block_id
+from outputs join inputs using(output_id) join transactions on inputs.tx_id = transactions.tx_id
+where output_id > -1 and pk_id <> sig_id and sig_id <> -1;
+
+insert into invalid_blocks
+select in_tx.block_id
+from outputs join inputs using(output_id), transactions as out_tx, transactions as in_tx
+where inputs.tx_id < outputs.tx_id
+and outputs.tx_id = out_tx.tx_id
+and inputs.tx_id = in_tx.tx_id;
+
+insert into invalid_blocks
+select block_id
+from inputs join outputs using(tx_id) join transactions using(tx_id)
+where inputs.output_id = -1
+group by block_id
+having min(tx_id) <> max(tx_id);
+
+insert into invalid_blocks
+select block_id
+from outputs join transactions using(tx_id)
+where outputs.value > 2100000000000000 or outputs.value < 0;
+
+select * from invalid_blocks group by block_id;
