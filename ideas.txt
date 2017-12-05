@@ -2,6 +2,7 @@
 check for:
 * transaction input >= transaction output?
 * user has enough btc to spend
-* double spending?
+* double spending
 * check if first trans of block is coinbase transaction
 * check if coinbase for block is 50 BTC + transaction fees
+* inputs with no existing outputs?

@@ -73,8 +73,16 @@ select block_id, output_id, first_tx_id, tx_id
 from get_first_multiple_usages() join inputs using(output_id) join transactions using(tx_id)
 where inputs.tx_id > first_tx_id;
 
--- gets blocks, where the same output is used more than once in the same transaction
+-- gets blocks, where the same output is used more than once as input in the same transaction
 select block_id, tx_id, output_id
 from get_first_multiple_usages() join inputs using(output_id) join transactions using(tx_id)
 group by output_id, tx_id, block_id
 having count(tx_id) > 1;
+
+-- gets blocks, where the input signature pk is not the pk of the owner of the output
+-- = a person wanted to buy something with money another person owns
+-- signature ids of -1 are ignored, since different sig calculation scripts (standard/custom)
+-- can be used in different transactions (by the same user, but this can't be checked with the given data)
+select block_id, output_id, input_id, pk_id, sig_id
+from outputs join inputs using(output_id) join transactions on inputs.tx_id = transactions.tx_id
+where output_id > -1 and pk_id <> sig_id and sig_id <> -1;
