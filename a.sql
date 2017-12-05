@@ -94,3 +94,11 @@ from outputs join inputs using(output_id), transactions as out_tx, transactions 
 where inputs.tx_id < outputs.tx_id
 and outputs.tx_id = out_tx.tx_id
 and inputs.tx_id = in_tx.tx_id;
+
+-- selects all blocks, where there are more than one coinbase transaction
+-- There must only be 1 coinbase transaction per block
+select block_id, min(tx_id) as min_coinbase_tx, max(tx_id) as max_coinbase_tx
+from inputs join outputs using(tx_id) join transactions using(tx_id)
+where inputs.output_id = -1
+group by block_id
+having min(tx_id) <> max(tx_id);
