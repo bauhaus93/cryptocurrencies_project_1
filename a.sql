@@ -102,3 +102,8 @@ from inputs join outputs using(tx_id) join transactions using(tx_id)
 where inputs.output_id = -1
 group by block_id
 having min(tx_id) <> max(tx_id);
+
+-- selects all blocks, where transactions with illegal values occur
+select block_id, output_id, value
+from outputs join transactions using(tx_id)
+where outputs.value > 2100000000000000 or outputs.value < 0;
