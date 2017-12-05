@@ -86,3 +86,11 @@ having count(tx_id) > 1;
 select block_id, output_id, input_id, pk_id, sig_id
 from outputs join inputs using(output_id) join transactions on inputs.tx_id = transactions.tx_id
 where output_id > -1 and pk_id <> sig_id and sig_id <> -1;
+
+-- selects all blocks, where the a transaction used an input which is generated in a future transaction
+-- = the money is not (yet) owned by the payer
+select out_tx.block_id as output_block, in_tx.block_id as input_block, outputs.tx_id as output_tx, inputs.tx_id as input_tx, output_id
+from outputs join inputs using(output_id), transactions as out_tx, transactions as in_tx
+where inputs.tx_id < outputs.tx_id
+and outputs.tx_id = out_tx.tx_id
+and inputs.tx_id = in_tx.tx_id;
