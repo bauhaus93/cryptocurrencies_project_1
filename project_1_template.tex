@@ -1,0 +1,78 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[cm]{fullpage}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{xspace}
+\usepackage[english]{babel}
+\usepackage{fancyhdr}
+\usepackage{titling}
+\renewcommand{\thesection}{Exercise \Alph{section}:}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This part needs customization from you %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% please enter exercise sheet number, your name, matriculation, and a
+% list of students which you worked together with here
+\newcommand{\name}{Jakob Fischer}
+\newcommand{\matriculation}{01427178}
+\newcommand{\fellows}{None}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%           End of customization         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\author{\name\ (\matriculation)}
+
+\newcommand{\projnumber}{1}
+\newcommand{\Title}{Analysing the Blockchain}
+\setlength{\headheight}{15.2pt}
+\setlength{\headsep}{20pt}
+\setlength{\textheight}{680pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Cryptocurrencies - Project \projnumber\ - Analysing the Blockchain}
+\fancyhead[C]{}
+\fancyhead[R]{\name}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyfoot[C]{\thepage}
+
+
+\begin{document}
+\thispagestyle{empty}
+\noindent\framebox[\linewidth]{%
+ \begin{minipage}{\linewidth}%
+ \hspace*{5pt} \textbf{Cryptocurrencies (WS2017/18)} \hfill Prof.~Matteo Maffei \hspace*{5pt}\\
+
+ \begin{center}
+  {\bf\Large Project \projnumber~-- \Title}
+ \end{center}
+
+ \vspace*{5pt}\hspace*{5pt} \hfill TU Wien \hspace*{5pt}
+\end{minipage}%
+}
+\vspace{0.5cm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{center}
+  Submission by \textbf{\theauthor}\\[1cm]
+
+  During the development of the project solutions, I have discussed
+  problems, solutions, and other questions with the following other
+  students:\\
+  \fellows %please fill the information above
+\end{center}
+
+\section{Finding invalid blocks}
+% Fill here your answers for exercise A
+
+\section{UTXOs}
+% Fill here your answers for exercise B
+
+\section{De-anonymization}
+% Fill here your answers for exercise C
+
+\end{document}

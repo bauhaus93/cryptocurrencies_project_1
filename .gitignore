@@ -1,3 +1,8 @@
 project_1/
-*.log
 todo.sql
+*.log
+*.aux
+*.fdb_latexmk
+*.fls
+*.gz
+*.pdf
