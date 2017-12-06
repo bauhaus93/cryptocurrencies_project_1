@@ -6,7 +6,7 @@ delete from addressRelations;
 delete from max_value_by_entity;
 delete from min_addr_of_max_entity;
 delete from max_tx_to_max_entity;
-  
+
 drop table if exists cluster;
 drop table if exists cluster_money;
 create table cluster(id integer, address integer);
