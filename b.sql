@@ -2,6 +2,7 @@ delete from utxos;
 delete from number_of_utxos;
 delete from id_of_max_utxo;
 
+--TODO check if coinbase transactions also considered?
 insert into utxos
 select output_id, value
 from outputs left join inputs using(output_id)
