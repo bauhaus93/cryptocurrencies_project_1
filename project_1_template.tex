@@ -67,12 +67,60 @@
 \end{center}
 
 \section{Finding invalid blocks}
-% Fill here your answers for exercise A
+
+For the rules on blocks, I relied on the source mentioned in the assignment description:\newline \verb https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
+\newline\newline
+Several functions were created, to split up bigger queries and make queries reusable, to make exploration of the data easier.
+\newline\newline
+For each transaction in a block, it should be checked, if the value of the
+inputs is greater or equal the value of the outputs. I called the difference of input to output for a transaction "throughput".
+Each transaction should have a throughput greater or equal to zero. If greater than zero, the surplus is the transaction fee.\newline
+\newline
+For each block, the coinbase transaction (input source id = -1), which in it's check is assumed to be the first transaction of a block, must be equal to the sum of the block creation fee (50 BTC)
+and the surplus of transaction throughputs.\newline
+On the one side, this could be violated by transactions with negative throughput.\newline
+On the other side, block creators could have calculated the coinbase false, by not using the correct block creation fee or not adding transaction fees. This also includes cases, where the coinbase transaction was
+split into two or more separate transactions, which is not allowed.
+A separate query for finding blocks with more than one coinbase transaction (transactions with different tx ids) was also created.\newline
+\newline
+Double spending occurs, if an output is used more than one time as an input source (in different, but also in the same transactions). Transactions with input sources already
+used in a previous (or the current) transaction are invalid (and so are their blocks).\newline
+Additionally it should be checked, that every output is used only at a later point in time (higher tx id) as input source.
+Otherwise it would be possible to spend money, which is not (yet) owned.\newline
+\newline
+The public keys of output/input pairs (connected by output id) must be equal. If not, a person other than the owner of the output has used it as
+input source in another transaction. However, if a custom script was used (sig id = -1) the signature could not be checked.\newline
+\newline
+Each output must be within the legal money range, which is between 0 and 2100000000000000 satoshis.\newline
+Furthermore, the money transfered in a single transaction must not exceed 2100000000000000 (Since this query yielded zero results, I excluded it).
 
 \section{UTXOs}
-% Fill here your answers for exercise B
+
+For finding unspent outputs, each output should be matched to a possible input (which uses the output as input source).
+Outputs, which have no connection to an input via output id are not spent. Additionally, outputs which are referred as source in transactions
+in the past are considered unspent, since the transaction is invalid and the output didn't exist at the time of spending.
 
 \section{De-anonymization}
-% Fill here your answers for exercise C
 
+To relate addresses by joint control, inputs of the same transaction (tx id) where matched, and their sig ids related. Coinbase transactions were ignored.
+\newline\newline
+For relations using serial control, only transactions with exactly one input and output are considered. Their sig/pk id are related with one another.
+\newline\newline
+The results of the clusterAddresses() function are written into a new table called cluster.
+\newline\newline
+Next, the owned money of each cluster is written to a table called cluster\_money, for making later queries easier to perform.
+To create this table two functions were created, which return the money owned by a specified entity id and the money for each entity id.
+\newline\newline
+The get\_richest\_entity function returns the entity id and money from the cluster\_money table with the highest amount of money.
+\newline\newline
+The get\_richest\_entity function is then used to get the highest money amount of a single entity.
+\newline\newline
+The get\_richest\_addresses function uses the get\_richest\_entity function to first retrieve the id of the richest entity and then match
+the entity id with the cluster table to retrieve all addresses of the richtest entity id.
+\newline\newline
+The result of the get\_richest\_addresses function is then used to get the smallest address of the richtest entity.
+\newline\newline
+To get the biggest transaction of the richest entity, the maximum value of an transaction output of the richest entity is selected.
+This is done with help of the already created get\_richest\_addresses function.Since
+none of the the transactions of the richest entity consist of multiple outputs, no additional grouping on tx ids was done.
 \end{document}
