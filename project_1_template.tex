@@ -84,27 +84,41 @@ Several functions were created, to split up bigger queries, making queries reusa
 Some invalid blocks are detected and inserted into invalid\_blocks by multiple queries (eg. the throughput/coinbase queries, legal range queries), so grouping should be done
 to avoid getting duplicate block ids.
 \newline\newline
-The commented-out queries are practically the same queries as the executed queries, but they only show, why a certain block contains an error and do not insert into the invalid\_blocks table.
-\newline\newline
 Ideas/Execution:
 \begin{itemize}
-\item For each transaction in a block, it should be checked, if the value of the
+
+
+\item Q1: It should be checked, if the first tx of a block (lowest tx id) has correct input source (-1) and sig id (0), as it's the coinbase tx.
+
+\item Q2: Blocks with more than one coinbase transaction should be queried. These have coinbase transactions (input source id -1, sig id 0) with different tx ids.
+A valid block must have exactly one coinbase transaction.
+
+\item Q3: The first tx of a block (coinbase tx) cannot have an output of less than 50 BTC, since 50 BTC is the currently used block creation fee.
+
+\item Q4: For each transaction in a block, it should be checked, if the value of the
 input sources is greater or equal than the value of the outputs. I called the difference of input to output for a transaction "throughput".
-Each transaction should have a throughput greater or equal to zero. If greater than zero, the surplus is the transaction fee.\newline
-\item For each block, the coinbase transaction (input source id = -1), which in it's check is assumed to be the first transaction of a block, must be equal to the sum of the block creation fee (50 BTC)
+Each transaction should have a throughput greater or equal to zero. If greater than zero, the surplus is the transaction fee.
+If throughput is less than zero, the transaction and it's block are invalid.
+
+\item Q5: For each block, the coinbase transaction (which now is now assumed to be the lowest tx id of a block), must be equal to the sum of the block creation fee (50 BTC)
 and the surplus of transaction throughputs.\newline
 On the one side, this was violated by transactions with negative throughput (if the block creator doesn't apply a negative transaction fee)\newline
-On the other side, block creators may have calculated the coinbase false, by not using the correct block creation fee or not adding transaction fees. This also includes cases, where the coinbase transaction was
-split into two or more separate transactions, which is not allowed.
-An explicit query for finding blocks with more than one coinbase transaction was also created (transactions with different tx ids; done by grouping over a block and compare min/max tx ids of input sources with id -1).\newline
-Also, an explicit query was created to check, if the first tx of a block (lowest tx id) has correct input source (-1) and sig id (0).
-\item Double spending occurs, if the same output is used more than once as an input source (in different, but also in the same transactions). Transactions with input sources already
-used in a previous (or the current) transaction are invalid (and so are their blocks).\newline
-Additionally it should be checked, that every output is used only at a later point in time (higher tx id) as input source.
-Otherwise it would be possible to spend money which is not (yet) owned or even existing.\newline
-\item The public keys of output/input pairs (connected by output id) must be equal. If not, a person other than the owner of the output has used it as
+On the other side, block creators may have calculated the coinbase false, by not using the correct block creation fee or not adding transaction fees.
+This also query also finds some blocks from the prevous queries.
+
+\item Q6/Q7: Double spending occurs, if the same output is used more than once as an input source (in different, but also in the same transactions). Transactions with input sources already
+used in a previous (or the current) transaction are invalid (and so are their blocks).
+
+\item Q8: It should be checked, that every output is used only at a later point in time (higher tx id) as input source.
+Otherwise it would be possible to spend money which is not (yet) owned or even existing.
+
+\item Q9: Each output must be within the legal money range, which is between 0 and 2100000000000000 satoshis.
+\item Q10: The total money transferred in a single transaction must also be in legal range (This query only yielded the block already found with the single money range query).
+
+\item Q11: The public keys of output/input pairs (connected by output id) must be equal. If not, a person other than the owner of the output has used it as
 input source in another transaction. However, if a custom script was used (id = -1) on one or two sides, this constraint could not be checked.\newline
-\item Keys (pk/sig id) cannot be less than -1. I couldn't find any limitations on key range in the project description (except on custom scripts usage and coinbase txs).
+
+\item Q12/Q13: Keys (pk/sig id) cannot be less than -1. I couldn't find any limitations on key range in the project description (except on custom scripts usage and coinbase txs).
 However, real bitcoin public keys always have a prefix byte with value 0x2, 0x3 or 0x4 [1].
 So when using one's or two's complement to interpret negative numbers on little endian encoding [2] negative pks shouldn't be possible.
 \newline
@@ -113,8 +127,6 @@ Sources:
   [1] https://steemit.com/bitcoin/@b1tma0/bitcoin-public-key-formats
   [2] http://learnmeabitcoin.com/glossary/little-endian
 \end{verbatim}
-\item Each output must be within the legal money range, which is between 0 and 2100000000000000 satoshis.\newline
-Furthermore, the total money transferred in a single transaction must also be in legal range (This query only yielded the block already found with the single money range query)\newline
 \end{itemize}
 
 \section{UTXOs}
