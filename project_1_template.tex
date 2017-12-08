@@ -67,22 +67,26 @@
 \end{center}
 
 \section{Finding invalid blocks}
-
-For the rules on blocks, I relied on the source mentioned in the assignment description:\newline \verb https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
-\newline\newline
-Several functions were created, to split up bigger queries, make queries reusable and exploration of the data easier:
+For the rules on blocks, I mostly relied on the source mentioned in the assignment description:
+\begin{verbatim}
+  https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
+\end{verbatim}
+Several functions were created, to split up bigger queries, making queries reusable and exploration of the data easier:
 \begin{itemize}
-   \item get\_tx\_throughputs(): retrieves difference of input source values to output values for each transaction.
-   \item get\_block\_throughputs(): retrieves throughput difference for each block, by grouping data from get\_tx\_throughputs() over block id.
-   \item get\_first\_block\_transactions(): returns transaction with minimal tx id from each block.
-   \item get\_block\_coinbases(): sums over all tx outputs for the first transaction in each block. Does not check, if it's really a coinbase transaction (input source id = -1).
-   \item get\_multiple\_used\_outputs(): groups over input sources (outputs joined with inputs over output id) and returns all rows where more than 1 row was grouped.
-   \item get\_first\_multiple\_usages(): gets the minimal tx id of txs which have an input source with multiple usages (Only this txs are valid).
+   \item get\_tx\_throughputs(): Retrieves difference of input source values to output values for each transaction.
+   \item get\_block\_throughputs(): Retrieves throughput difference for each block, by grouping data from get\_tx\_throughputs() over block id.
+   \item get\_first\_block\_transactions(): Returns transaction with minimal tx id from each block.
+   \item get\_block\_coinbases(): Sums over all tx outputs for the first transaction in each block. Does not check, if it's really a coinbase transaction (input source id = -1).
+   \item get\_multiple\_used\_outputs(): Groups over input sources (outputs joined with inputs over output id) and returns all rows where more than 1 row was grouped.
+   \item get\_first\_multiple\_usages(): Gets the minimal tx id of txs which have an input source with multiple usages (Only this txs are valid).
 \end{itemize}
 \newline\newline
-Some invalid blocks are detected and inserted into invalid\_blocks by multiple queries (eg. the throughput/coinbase queries, legal range queries).
+Some invalid blocks are detected and inserted into invalid\_blocks by multiple queries (eg. the throughput/coinbase queries, legal range queries), so grouping should be done
+to avoid getting duplicate block ids.
 \newline\newline
-Ideas/Performed queries:
+The commented-out queries are practically the same queries as the executed queries, but they only show, why a certain block contains an error and do not insert into the invalid\_blocks table.
+\newline\newline
+Ideas/Execution:
 \begin{itemize}
 \item For each transaction in a block, it should be checked, if the value of the
 input sources is greater or equal than the value of the outputs. I called the difference of input to output for a transaction "throughput".
@@ -98,38 +102,44 @@ used in a previous (or the current) transaction are invalid (and so are their bl
 Additionally it should be checked, that every output is used only at a later point in time (higher tx id) as input source.
 Otherwise it would be possible to spend money which is not (yet) owned or even existing.\newline
 \item The public keys of output/input pairs (connected by output id) must be equal. If not, a person other than the owner of the output has used it as
-input source in another transaction. However, if a custom script was used (sig id = -1) this constraint could not be checked.\newline
+input source in another transaction. However, if a custom script was used (id = -1) on one or two sides, this constraint could not be checked.\newline
+\item Keys (pk/sig id) cannot be less than -1. I couldn't find any limitations on key range in the project description (except on custom scripts usage and coinbase txs).
+However, real bitcoin public keys always have a prefix byte with value 0x2, 0x3 or 0x4 [1].
+So when using one's or two's complement to interpret negative numbers on little endian encoding [2] negative pks shouldn't be possible.
+\newline
+Sources:
+\begin{verbatim}
+  [1] https://steemit.com/bitcoin/@b1tma0/bitcoin-public-key-formats
+  [2] http://learnmeabitcoin.com/glossary/little-endian
+\end{verbatim}
 \item Each output must be within the legal money range, which is between 0 and 2100000000000000 satoshis.\newline
 Furthermore, the total money transferred in a single transaction must also be in legal range (This query only yielded the block already found with the single money range query)\newline
 \end{itemize}
 
 \section{UTXOs}
-
-For finding unspent outputs, each output should be matched to a possible input (which uses the output as input source).
-Outputs, which have no connection to an input via output id are not spent. Additionally, outputs which are referred as source in transactions
-in the past are considered unspent, since the transaction is invalid and the output didn't exist at the time of spending.
-
+\begin{itemize}
+\item For finding unspent outputs, each output should be matched to a possible input (which uses the output as input source).
+Outputs, which have no connection to an input via output id are not spent (they are not a input source anywhere).
+\item Additionally, outputs which are referred as input source in transactions in it's past are considered unspent,
+since the output didn't exist at the time of spending.
+\end{itemize}
 \section{De-anonymization}
 
-To relate addresses by joint control, inputs of the same transaction (tx id) where matched, and their sig ids related. Coinbase transactions were ignored.
-\newline\newline
-For relations using serial control, only transactions with exactly one input and output are considered. Their sig/pk id are related with one another.
-\newline\newline
-The results of the clusterAddresses() function are written into a new table called cluster.
-\newline\newline
-Next, the owned money of each cluster is written to a table called cluster\_money, for making later queries easier to perform.
-To create this table two functions were created, which return the money owned by a specified entity id and the money for each entity id.
-\newline\newline
-The get\_richest\_entity function returns the entity id and money from the cluster\_money table with the highest amount of money.
-\newline\newline
-The get\_richest\_entity function is then used to get the highest money amount of a single entity.
-\newline\newline
-The get\_richest\_addresses function uses the get\_richest\_entity function to first retrieve the id of the richest entity and then match
-the entity id with the cluster table to retrieve all addresses of the richtest entity id.
-\newline\newline
-The result of the get\_richest\_addresses function is then used to get the smallest address of the richtest entity.
-\newline\newline
-To get the biggest transaction of the richest entity, the maximum value of an transaction output of the richest entity is selected.
+Created functions:
+\begin{itemize}
+  \item get\_richest\_entity(): Returns the entity id and money from the cluster\_money table with the highest amount of money.
+  \item get\_richest\_addresses(): Retrieves all addresses of the richtest entity, using the get\_richest\_entity() function.
+\end{itemize}
+Execution:
+\begin{enumerate}
+\item To relate addresses by joint control, inputs of the same transaction (tx id) where matched, and their sig ids related. Coinbase transactions should be ignored.
+\item For relations using serial control, only transactions with exactly one input and output are considered. Their sig/pk id are related with one another.
+\item The results of the clusterAddresses() function are written into a new table called cluster.
+\item Next, the owned money of each cluster is written to a table called cluster\_money, for making later queries easier to perform.
+\item The get\_richest\_entity function is used to get the highest money amount of a single entity.
+\item The get\_richest\_addresses function is used to get the smallest address of the richtest entity.
+\item To get the biggest transaction of the richest entity, the maximum value of an transaction output of the richest entity is selected.
 This is done with help of the already created get\_richest\_addresses function.Since
 none of the the transactions of the richest entity consist of multiple outputs, no additional grouping on tx ids was done.
+\end{enumerate}
 \end{document}

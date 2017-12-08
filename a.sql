@@ -1,3 +1,5 @@
+--delete from invalid_blocks;
+
 create or replace function get_tx_throughputs() returns table(tx_id integer, block_id integer, throughput numeric) as $$
   with
   tx_input as (
@@ -51,6 +53,12 @@ create or replace function get_first_multiple_usages() returns table(output_id i
   join transactions on inputs.tx_id = transactions.tx_id
   group by output_id;
 $$ language sql;
+
+/*
+-- gets blocks, where the first tx is not a coinbase tx
+select block_id, tx_id, output_id, sig_id
+from get_first_block_transactions() join inputs using(tx_id)
+where output_id <> -1 or sig_id <> 0;
 
 -- get blocks with coinbases less than current block creation fee
 select *
@@ -122,11 +130,13 @@ where sig_id < -1;
 -- selects all blocks, with invalid output pk ids (pk ids must be >= -1)
 select block_id, pk_id
 from outputs join transactions using(tx_id)
-where pk_id < -1;
+where pk_id < -1;*/
 
--- now following: the same queries as before, but now do only insert
--- into to the invalid_blocks table
-delete from invalid_blocks;
+
+insert into invalid_blocks
+select block_id
+from get_first_block_transactions() join inputs using(tx_id)
+where output_id <> -1 or sig_id <> 0;
 
 insert into invalid_blocks
 select block_id

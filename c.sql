@@ -2,15 +2,16 @@ drop table if exists closure;
 drop table if exists cliques;
 drop table if exists iterationset;
 
-delete from addressRelations;
-delete from max_value_by_entity;
-delete from min_addr_of_max_entity;
-delete from max_tx_to_max_entity;
+--delete from addressRelations;
+--delete from max_value_by_entity;
+--delete from min_addr_of_max_entity;
+--delete from max_tx_to_max_entity;
 
-drop table if exists cluster;
-drop table if exists cluster_money;
-create table cluster(id integer, address integer);
-create table cluster_money(id integer, value bigint);
+-- drop table if exists cluster;
+-- drop table if exists cluster_money;
+
+create table if not exists cluster(id integer, address integer);
+create table if not exists cluster_money(id integer, value bigint);
 
 create or replace function get_entity_utxo(entity_id integer) returns table(value bigint) as $$
   with
@@ -79,6 +80,6 @@ select tx_id
 from get_richest_addresses() join outputs on addr = pk_id
 where value = (select max(value) from get_richest_addresses() join outputs on addr = pk_id);
 
-select * from max_value_by_entity;
-select * from min_addr_of_max_entity;
-select * from max_tx_to_max_entity;
+--select * from max_value_by_entity;
+--select * from min_addr_of_max_entity;
+--select * from max_tx_to_max_entity;
