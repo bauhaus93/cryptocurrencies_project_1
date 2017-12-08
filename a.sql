@@ -114,6 +114,16 @@ from outputs join transactions using(tx_id)
 group by tx_id, block_id
 having sum(value) > 2100000000000000 or sum(value) < 0;
 
+-- selects all blocks, with invalid input sig ids (sig ids must be >= -1)
+select block_id, sig_id
+from inputs join transactions using(tx_id)
+where sig_id < -1;
+
+-- selects all blocks, with invalid output pk ids (pk ids must be >= -1)
+select block_id, pk_id
+from outputs join transactions using(tx_id)
+where pk_id < -1;
+
 -- now following: the same queries as before, but now do only insert
 -- into to the invalid_blocks table
 delete from invalid_blocks;
@@ -174,5 +184,14 @@ from outputs join transactions using(tx_id)
 group by tx_id, block_id
 having sum(value) > 2100000000000000 or sum(value) < 0;
 
+insert into invalid_blocks
+select block_id
+from inputs join transactions using(tx_id)
+where sig_id < -1;
+
+insert into invalid_blocks
+select block_id
+from outputs join transactions using(tx_id)
+where pk_id < -1;
 
 select * from invalid_blocks group by block_id;
