@@ -108,7 +108,14 @@ select block_id, output_id, value
 from outputs join transactions using(tx_id)
 where outputs.value > 2100000000000000 or outputs.value < 0;
 
+-- select all blocks, where the total transferred output is not in legal range
+select block_id, tx_id, sum(value) as total_value
+from outputs join transactions using(tx_id)
+group by tx_id, block_id
+having sum(value) > 2100000000000000 or sum(value) < 0;
 
+-- now following: the same queries as before, but now do only insert
+-- into to the invalid_blocks table
 delete from invalid_blocks;
 
 insert into invalid_blocks
@@ -160,5 +167,12 @@ insert into invalid_blocks
 select block_id
 from outputs join transactions using(tx_id)
 where outputs.value > 2100000000000000 or outputs.value < 0;
+
+insert into invalid_blocks
+select block_id
+from outputs join transactions using(tx_id)
+group by tx_id, block_id
+having sum(value) > 2100000000000000 or sum(value) < 0;
+
 
 select * from invalid_blocks group by block_id;
