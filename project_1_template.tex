@@ -97,6 +97,7 @@ On the one side, this was violated by transactions with negative throughput (if 
 On the other side, block creators may have calculated the coinbase false, by not using the correct block creation fee or not adding transaction fees. This also includes cases, where the coinbase transaction was
 split into two or more separate transactions, which is not allowed.
 An explicit query for finding blocks with more than one coinbase transaction was also created (transactions with different tx ids; done by grouping over a block and compare min/max tx ids of input sources with id -1).\newline
+Also, an explicit query was created to check, if the first tx of a block (lowest tx id) has correct input source (-1) and sig id (0).
 \item Double spending occurs, if the same output is used more than once as an input source (in different, but also in the same transactions). Transactions with input sources already
 used in a previous (or the current) transaction are invalid (and so are their blocks).\newline
 Additionally it should be checked, that every output is used only at a later point in time (higher tx id) as input source.
